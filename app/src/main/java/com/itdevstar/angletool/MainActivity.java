@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,27 +41,26 @@ public class MainActivity extends AppCompatActivity {
     private float pitch;
     private float roll;
 
-    private Drawable    mCompassDrawable;
+
     private CompassView mView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_main);
+
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-
-        mCompassDrawable = getResources().getDrawable(R.drawable.sc_position);
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         mSensorAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorMagneticField = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        mView = new CompassView(this);
-        setContentView(mView);
+        mView = (CompassView)findViewById(R.id.v_compass);
     }
 
     @Override
@@ -79,6 +79,10 @@ public class MainActivity extends AppCompatActivity {
         if (false) Log.d(TAG, "onStop");
         mSensorManager.unregisterListener(mySensorEventListener);
         super.onStop();
+    }
+
+    public void onClickedFinish(View view) {
+        finish();
     }
 
     private SensorEventListener mySensorEventListener = new SensorEventListener() {
@@ -114,71 +118,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("roll", Float.toString(roll));
 
                 if (mView != null) {
-                    mView.invalidate();
+                    mView.resetPitch(pitch);
                 }
             }
         }
     };
 
-    private class CompassView extends View {
-        private Paint   mPaint = new Paint();
-        private boolean mAnimate;
-
-        private int     mLineColor = Color.rgb(12, 110, 165);
-        private float   mCxRate = (float)0.296;
-        private float   mCyRate = (float)0.201;
-        private float   mLineLenRate = (float)(0.603);
-
-        public CompassView(Context context) {
-            super(context);
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            Paint paint = mPaint;
-
-            canvas.drawColor(Color.BLACK);
-
-            paint.setAntiAlias(true);
-            paint.setColor(mLineColor);
-            paint.setStyle(Paint.Style.FILL);
-
-            int w = canvas.getWidth();
-            int h = canvas.getHeight();
-
-            int top = (h - w) / 2;
-            int cx = (int)(w * mCxRate);
-            int cy = top + (int)(w * mCyRate);
-
-            Path path = new Path();
-            path.moveTo(-6, 0);
-            path.lineTo(-6, w * mLineLenRate);
-            path.lineTo(6, w * mLineLenRate);
-            path.lineTo(6, 0);
-            path.close();
-
-            mCompassDrawable.setBounds(0, top, w, w + top);
-            mCompassDrawable.draw(canvas);
-
-            canvas.translate(cx, cy);
-            if (values != null) {
-                canvas.rotate(-pitch);
-            }
-            canvas.drawPath(path, mPaint);
-        }
-
-        @Override
-        protected void onAttachedToWindow() {
-            mAnimate = true;
-            if (false) Log.d(TAG, "onAttachedToWindow. mAnimate=" + mAnimate);
-            super.onAttachedToWindow();
-        }
-
-        @Override
-        protected void onDetachedFromWindow() {
-            mAnimate = false;
-            if (false) Log.d(TAG, "onDetachedFromWindow. mAnimate=" + mAnimate);
-            super.onDetachedFromWindow();
-        }
-    }
 }
